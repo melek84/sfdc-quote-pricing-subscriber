@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 				<flow-ref doc:name="sfdc-quotePricing-boss" doc:id="74e46764-df17-4485-9323-4db98ac1941c" name="sfdc-quotePricing-boss"/>
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="No Boss_QuoteId or Status not Reviewed" doc:id="624e363a-adb2-46b5-8abe-a6bfd1bddf3c" message="No Boss_QuoteId or Status not Reviewed --- Skipping Boss Sys Api Call  : #[output application/json --- vars.transactionProperties]"/>
+				<logger level="INFO" doc:name=" Status not Reviewed" doc:id="624e363a-adb2-46b5-8abe-a6bfd1bddf3c" message="No Boss_QuoteId or Status not Reviewed --- Skipping Boss Sys Api Call  : #[output application/json --- vars.transactionProperties]"/>
 			</otherwise>
 		</choice>
 	</flow>
