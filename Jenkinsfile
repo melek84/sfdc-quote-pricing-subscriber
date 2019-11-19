@@ -4,7 +4,7 @@ pipeline {
   environment {
     //adding a comment for the commit test
     DEPLOY_CREDS = credentials('deploy-anypoint-user')
-    MULE_VERSION = '4.2.0'
+    MULE_VERSION = '4.2.1'
     BG = "Blue Bird Company"
     WORKER = "Micro"
   }
