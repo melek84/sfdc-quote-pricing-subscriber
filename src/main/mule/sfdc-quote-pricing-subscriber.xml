@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<flow name="sfdc-quote-pricing-subscriber" doc:id="b0558b32-06c7-4da5-9bcc-cb29c9dee1a5" >
+		<salesforce:replay-channel replayOption="FROM_REPLAY_ID" doc:name="Replay channel" doc:id="7b73354f-050c-4ee8-b713-1e327be9f1be" config-ref="Salesforce_Config" streamingChannel="/data/Quote_Sync__ChangeEvent" replayId="-1" autoReplay="true"/>
+		<logger level="INFO" doc:name="QuotePricing recently modified" doc:id="df8f3e71-ad73-4801-aaf5-1818c1531279" message="#['QuotePricing recently modified :\n' ++ write(payload ,&quot;application/json&quot;)]"/>
+		<flow-ref doc:name="initializeTransactionProperties" doc:id="eca4bfa6-0984-489a-b1d1-b89d717eb6f0" name="initializeTransactionProperties"/>
+		<set-variable value="#[payload]" doc:name="OriginalPayload" doc:id="a92a1720-5e57-42b4-93f2-ca9f4396630f" variableName="OriginalPayload"/>
+		<choice doc:name="Choice" doc:id="4a8f45e9-ec83-4e5f-9641-d490d55e6cfc" >
+			<when expression='#[payload.data.payload.QuoteLineItem_BOSS_Quote__c !=null and payload.data.payload.QuotelineItem_Status__c=="Pricing Reviewed"]' doc:id="725786ed-93e5-4f5a-a0e1-4d7ff15ee45a">
+				<flow-ref doc:name="sfdc-quotePricing-boss" doc:id="74e46764-df17-4485-9323-4db98ac1941c" name="sfdc-quotePricing-boss"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="No Boss_QuoteId or Status not Reviewed" doc:id="624e363a-adb2-46b5-8abe-a6bfd1bddf3c" message="No Boss_QuoteId or Status not Reviewed --- Skipping Boss Sys Api Call  : #[output application/json --- vars.transactionProperties]"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

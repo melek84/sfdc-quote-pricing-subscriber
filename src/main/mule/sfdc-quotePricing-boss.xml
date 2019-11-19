@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="sfdc-quotePricing-boss" doc:id="669b859f-75dc-4a86-97e3-d6423554291f" >
+		<ee:transform doc:name="create quotePricing" doc:id="511ba125-b117-4063-8488-3565332d6937" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="createQuote" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	discount_amount: payload.data.payload.QuoteLineItem_Discount_Amount_Approved__c as String,
+	quote_line_id: payload.data.payload.QuoteLineItem_ID__c default "",
+	pin_id: payload.data.payload.QuoteLineItem_PIN__c default "",
+	boss_quote_id: payload.data.payload.QuoteLineItem_BOSS_Quote__c,
+	discount_pct: payload.data.payload.QuoteLineItem_Total_Discount_Pct__c as String
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="log create payload" doc:id="2816e73b-74e6-43e7-8416-5062c3877578" message="create payload : #[output application/json --- vars.createQuote]"/>
+		<http:request method="POST" doc:name="Request_Boss_API" doc:id="d752d562-c8eb-49f8-a734-c711e90e7dac" config-ref="HTTP_Request_Boss" path="/quotepricing" target="quoteResponse">
+			<http:body ><![CDATA[#[vars.createQuote]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"correlationId" : payload.data.payload.ChangeEventHeader.transactionKey,
+	"bb-replay-id" : payload.data.event.replayId,
+	"bb-sf-account-name" : payload.data.payload.Name,
+	"bb-discount_amount" : payload.data.payload.QuoteLineItem_Discount_Amount_Approved__c,
+	"bb-quote_line_id" : payload.data.payload.QuoteLineItem_ID__c,
+	"bb-boss_quote_id" : payload.data.payload.QuoteLineItem_BOSS_Quote__c,
+	"bb-pin_id" : payload.data.payload.QuoteLineItem_PIN__c,
+	"bb-discount_pct" : payload.data.payload.QuoteLineItem_Total_Discount_Pct__c
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="log quotePricing response" doc:id="8a711e22-2565-4d49-b8a9-814c699e0893" message="quote response : #[output application/json --- vars.quoteResponse]"/>
+		<flow-ref doc:name="process-success-alert-flow" doc:id="2a5976c9-11c0-403a-8c10-763e512361ed" name="process-success-alert-flow"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="42b89a9f-fe40-402d-806e-dc2b8fc5ed8f" >
+				<logger level="INFO" doc:name="log error" doc:id="e71c5bc4-bb61-4a79-b244-7ec66edd0527" message="error mesage : #[error]" />
+				<set-variable value="#[vars.createQuote]" doc:name="failedPayload" doc:id="8f664841-f426-4cb3-b2f1-c57c3fc3e3c8" variableName="failedPayload" />
+				<set-variable value="#[upper(p('application.name')) ++ &quot; Create SFDC QuotePricing Sync - Failed&quot;]" doc:name="alertSubject" doc:id="97558225-7bf7-4486-918c-ce868dc4e5a1" variableName="alertSubject" />
+				<set-variable value="#[&quot;SFDC Create Data Failed for :  &quot; ++ p('event.type')]" doc:name="alertBody" doc:id="64a99958-cfbe-4fff-9f3f-f122a55d55ff" variableName="alertBody" />
+				<flow-ref doc:name="process-exception-alert-flow" doc:id="ff0aa095-2060-4174-82c3-687c9332c92a" name="process-exception-alert-flow" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<flow name="process-success-alert-flow" doc:id="4bd29c83-cec7-448b-8747-dbbd412523ee">
+		<flow-ref doc:name="finalizeTransactionProperties" doc:id="0745eabd-12c0-43a9-9b8a-805107be9202" name="finalizeTransactionProperties"/>
+		<choice doc:name="Choice" doc:id="e8b630cc-548c-49f5-afd8-9ef8126e7244">
+			<when expression="#[(p('email.success.alert.enabled') default false)]">
+				<flow-ref doc:name="email-success-alert-flow" doc:id="869338b0-c592-4bf0-a356-b32ea3be63f6" name="email-success-alert-flow" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="9bab4691-58dd-4858-b8f0-1150367dde6a" message="Skipping alert. Caller can send alert" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message"
+			doc:id="9c204257-ddcd-4181-9c8e-33c16505a433">
+			<ee:message>
+				<ee:set-payload resource="dwl/emailResponse.dwl" />
+			
+</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3b3619c6-d715-4fa4-9dc8-a4b950c27c6d" >
+				<logger level="WARN" doc:name="Logger" doc:id="562f494b-22bf-421b-8687-ad604b5bc1f9" message="Error processing Exception and alert."/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="process-exception-alert-flow" doc:id="b2066c20-f347-4550-acd6-6eec092f7905">
+		<flow-ref doc:name="finalizeTransactionProperties" doc:id="73819f8a-cf16-4397-9ca0-93a910f9930a" name="finalizeTransactionProperties"/>
+		<choice doc:name="Choice" doc:id="07dae8a0-f724-40e7-8f9e-a179172cb6c0">
+			<when expression="#[(p('email.failure.alert.enabled') default true) or vars.alertProcessed]">
+				<flow-ref doc:name="email-alert-flow" doc:id="a309c337-939e-4b20-8afa-0399cc6373c2" name="email-alert-flow"/>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="cff6e482-5d57-4207-8322-3d46561e2f59" message="Skipping alert. Caller can send alert" />
+			</otherwise>
+		</choice>
+		<set-variable value="#[true]" doc:name="Set alertProcessed" doc:id="ceb43bb1-2994-45bc-a006-45ed5a49b81d" variableName="alertProcessed" />
+		<set-variable
+			value="#['500']"
+			doc:name="Set httpStatus" doc:id="ef8a962a-63a2-4fc8-9351-a08c328d2bbb" variableName="httpStatus"/>
+		<async doc:name="Async" doc:id="bfcbbcf1-8ab4-43a0-82c3-63d9273e8d54" >
+			<flow-ref doc:name="exception-loggging-flow" doc:id="ab5a3964-8fd5-45ec-b403-281d93f62334" name="exception-loggging-flow" />
+		</async>
+		<ee:transform doc:name="Transform Message"
+			doc:id="effc8cd7-ee29-4899-8b3e-e29126b892f9">
+			<ee:message>
+				<ee:set-payload resource="dwl/successEmailResponse.dwl" />
+			
+</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="057ab6bd-788c-443a-a385-c5da3878f4ca" >
+				<logger level="WARN" doc:name="Logger" doc:id="113137d8-7cd4-4072-ac2f-d6e34dd9696c" message="Error processing Exception and alert."/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="email-alert-flow" doc:id="1cd67c45-fce5-40d9-8a03-a04aeec426f1">
+		<ee:transform doc:name="Transform Message"
+			doc:id="b00ad3a1-d593-41f6-8bb9-e140f7bf1cdd">
+			<ee:message>
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var toList = p('email.error.alert.to.list') splitBy ','
+var defaultSubject= upper(p('application.name')) ++ " SFDC QuotePricing Subscriber - Failed"
+var defaultBody = " SFDC QuotePricing Subscriber failed"
+---
+{
+	"toList" :  (toList map (rec,index) ->{
+		"address":rec
+	}),
+	"subject" : if(vars.alertSubject?) vars.alertSubject else defaultSubject,
+	"body" :if(vars.alertBody?) vars.alertBody else  defaultBody,
+	"attachment": {
+		("SFDC QuotePricing Sync" ++ ".json"): write(vars.OriginalPayload, "application/json"),
+		(if(vars.failedPayload?) "failed-payload.json":write(vars.failedPayload, "application/json") else {})
+	},
+	"originApp": {
+		"appName": p('application.name')
+	},
+	"transactionProperties": vars.transactionProperties,
+	"error" : {
+		"message": error.cause.localizedMessage,
+		 "details": write(error, "application/java")
+	}
+	
+	
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			
+</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger"
+			doc:id="aaa56c95-5d99-4abe-977d-6ac8ef750002" message="Calling Email alert" />
+		<http:request method="POST" doc:name="Request"
+			doc:id="0cfe19e4-4242-44fa-9b17-50aae477b37a" path="/alert" sendCorrelationId="AUTO"
+			correlationId="#[vars.transactionProperties.correlationId]" config-ref="HTTP_Request_email_alert">
+			<http:body><![CDATA[#[vars.alertPayload]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"correlationId" : vars.transactionProperties.correlationId
+}]]]></http:headers>
+		</http:request>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="fae1ecdf-ab09-4a96-b7d0-e8e73f435cdf" >
+				<logger level="WARN" doc:name="Logger" doc:id="cb1b20ea-94c3-48a5-95d5-df2c75cb9312" message="Error during alert and exception processing" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	
+	<flow name="email-success-alert-flow" doc:id="4e4188fc-553f-498b-8c02-2bf5bea419d2">
+		<ee:transform doc:name="Transform Message"
+			doc:id="87db6be8-1863-48b5-87b3-af5c3fea131b">
+			<ee:message>
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var toList = p('email.success.alert.to.list') splitBy ','
+var defaultSubject= upper(p('application.name')) ++ " SFDC QuotePricing Subscriber - Success"
+var defaultBody = " SFDC QuotePricing Subscriber Data Processed"
+---
+{
+	"toList" :  (toList map (rec,index) ->{
+		"address":rec
+	}),
+	"subject" : if(vars.alertSubject?) vars.alertSubject else defaultSubject,
+	"body" :if(vars.alertBody?) vars.alertBody else  defaultBody,
+	"attachment": {
+		("SFDC QuotePricing Request" ++ " " ++ vars.OriginalPayload.data.payload.QuoteLineItem_ID__c ++ ".json"): write(vars.OriginalPayload, "application/json"),
+		("SFDC QuotePricing Response" ++ " " ++ vars.sfdcResponse[0].id ++ ".json"): write(vars.sfdcResponse, "application/json")
+	},
+	"originApp": {
+		"appName": p('application.name')
+	},
+	"transactionProperties": vars.transactionProperties
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			
+</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger"
+			doc:id="5f1e9b10-0b2d-4246-86d0-804f78c173fd" message="Calling Success Email alert" />
+		<http:request method="POST" doc:name="Request"
+			doc:id="860eadc6-3616-4bd1-80ef-fcc15a1c5cbe" path="/alert" sendCorrelationId="AUTO"
+			correlationId="#[vars.transactionProperties.correlationId]" config-ref="HTTP_Request_email_alert">
+			<http:body><![CDATA[#[vars.alertPayload]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"correlationId" : vars.transactionProperties.correlationId
+}]]]></http:headers>
+		</http:request>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6a79e8bd-0580-4ad1-a902-62082ab1628e" >
+				<logger level="WARN" doc:name="Logger" doc:id="5edbd3cb-79d4-4116-9044-1b895c9b9c8f" message="Error during alert and exception processing" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

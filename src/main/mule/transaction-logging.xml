@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="addTransactionProperty" doc:id="a6176bca-c389-4465-b249-892c67d1f36d" >
+		<ee:transform doc:name="Transform Message" doc:id="b9061f7f-81d8-45ce-8ab6-1ecfe2318bf1" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="tempProperties" ><![CDATA[%dw 2.0
+output application/json
+---
+
+{
+	(vars.transactionProperties),
+	(vars.newTransactionProperty)
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[vars.tempProperties]" doc:name="Set Variable" doc:id="e9db13d5-319f-4e2a-8183-193e98429a95" variableName="transactionProperties"/>
+		<logger level="INFO" doc:name=" vars.transactionProperties" doc:id="b9c6306c-76fa-4bee-bf53-021b6c8c1b7a" message="after adding key:value  - #[output  application/json --- vars.transactionProperties]"/>
+	</sub-flow>
+	<sub-flow name="initializeTransactionProperties" doc:id="a1122cac-70ec-4041-a633-b549af4715bc" >
+		<logger level="INFO" doc:name="Logger" doc:id="82d5e0bb-dca5-44ed-8868-980853531c98" message="attribute headers : #[output application/json --- attributes.headers default ' No headers']"/>
+		<ee:transform doc:name="Transform Message" doc:id="49d015ba-d6e3-4d52-b5dd-f9f9cdef2361" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="transactionProperties" ><![CDATA[%dw 2.0
+output application/json
+---
+
+	{
+	"correlationId":	payload.data.payload.ChangeEventHeader.transactionKey,
+	"bb-replay-id":	payload.data.event.replayId,
+	"bb-sf-account-name":	payload.data.payload.Name,
+	"bb-discount_amount": payload.data.payload.Discount_Amount_Approved__c,
+	"bb-quote_line_id": payload.data.payload.QuoteLineItem_ID__c,
+	"bb-boss_quote_id": payload.data.payload.QuoteLineItem_BOSS_Quote__c,
+	"bb-pin_id": payload.data.payload.Pin_Id__c,
+		"startTime":now()	
+	}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="vars.transactionProperties" doc:id="34a7e48d-7182-4763-b34a-0880b6bd160a" message="transactionProperties-initialized Value - #[output  application/json --- vars.transactionProperties]"/>
+	</sub-flow>
+	<sub-flow name="finalizeTransactionProperties" doc:id="36ac75e8-f54e-4cc8-8e52-987c60feff07" >
+		<ee:transform doc:name="Transform Message" doc:id="09c29271-8139-422e-914e-658f6c83788e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="transactionProperties" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	(vars.transactionProperties),
+	"endTime":now(),
+	"executionTime": (now()-(vars.transactionProperties.startTime as Time)).seconds ++ " seconds"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="vars.transactionProperties" doc:id="e0ce299d-1eb4-4340-8269-46dde3244ac1" message="finalized Value - #[output  application/json --- vars.transactionProperties]"/>
+	</sub-flow>
+</mule>

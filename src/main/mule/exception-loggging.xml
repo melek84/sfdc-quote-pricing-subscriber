@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="exception-loggging-flow" doc:id="40e602aa-249b-4ab4-9251-7d5917025938" >
+		<ee:transform doc:name="prepare error results" doc:id="38cea106-f403-4ba3-9037-bd36ebacd53f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import substring from modules::global_functions
+---
+{
+	ERROR_MESSAGE: error.cause.localizedMessage default vars.alertBody,
+	EXTERNAL_ID: "",
+	EVENT_TYPE: p('event.type'),
+	CPAYLOAD: vars.OriginalPayload,
+	SF_ID: vars.OriginalPayload.data.payload.QuoteLineItem_ID__c default "",
+	PROCESS_NAME: p('application.name'),
+	USER_UPDATE: p('int.user.name'),
+	SQLSTATE: " ",
+	NOTIFICATON_TYPE: "email" as String,
+	NOTIFICATION_USER: "email address" as String,
+	COMMENTS: substring(write(error, "application/java"),385) default vars.alertSubject,
+	ExceptionAlert:p('db.exception.enabled') default true
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="log exception " doc:id="d8bca0eb-c3d7-46d0-a45d-ea8e28578a4b" message="exception message #[output application/json --- payload]"/>
+		<http:request method="POST" doc:name="Request" doc:id="2c81617f-7d2d-4a73-b50c-77820b76a83b" config-ref="HTTP_Request_exceptionHandling" path="${http.exception.path}"/>
+	</flow>
+</mule>

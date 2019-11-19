@@ -1,0 +1,42 @@
+ {"data": {
+    "schema": "THg7dJ5BXw3EVSUXy3wPFg",
+    "payload": {
+      "LastModifiedDate": "2019-11-18T19:47:17.000Z",
+      "Quote_Change_Type__c": "UPDATE",
+      "Quoteline_LastModifiedByName__c": "Santoshi Mishras",
+      "QuoteLineItem_Discount_Amount_Approved__c": 25.0,
+      "CurrencyIsoCode": "USD",
+      "Name": "11/8 - Los Angeles Unified School District (CA) - 2 Units by 6/2020",
+      "QuoteLineItem_ID__c": "0QL5C000000HBfhWAG",
+      "QuotelineItem_Status__c": "Pricing Reviewed",
+      "OwnerId": "0055C000002049QQAQ",
+      "CreatedById": "0055C000002049QQAQ",
+      "QuoteLineItem_Total_Discount_Pct__c": 35.0,
+      "ChangeEventHeader": {
+        "commitNumber": 10558812327185,
+        "commitUser": "0055C000002049QQAQ",
+        "sequenceNumber": 1,
+        "entityName": "Quote_Sync__c",
+        "changeType": "CREATE",
+        "changedFields": [
+          
+        ],
+        "changeOrigin": "",
+        "transactionKey": "000143ed-4198-4d57-757c-ba68cc272cbf",
+        "commitTimestamp": 1574106437000,
+        "recordIds": [
+          "a0R5C000000MtkeUAC"
+        ]
+      },
+      "CreatedDate": "2019-11-18T19:47:17.000Z",
+      "QuoteLineItem_BOSS_Quote__c": "34567",
+      "QuoteLineItem_PIN__c": "4567",
+      "LastModifiedById": "0055C000002049QQAQ",
+      "Quoteline_CreatedByName__c": "Timothy Murphy"
+    },
+    "event": {
+      "replayId": 118574
+    }
+  },
+  "channel": "/data/Quote_Sync__ChangeEvent"
+}

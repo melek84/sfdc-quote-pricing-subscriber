@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="6a511187-f195-422e-8987-b2db5d557e44" >
+		<salesforce:cached-basic-connection username="${sfdc.username}" password="${sfdc.password}" securityToken="${sfdc.securityToken}" url="${sfdc.url}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="2e0ab397-b5bf-430b-8220-95c4567f718a" file="sfdc-quote-pricing-subscriber-${mule.env}.properties" />
+	<http:request-config name="HTTP_Request_Boss" doc:name="HTTP Request configuration" doc:id="c501b627-daa2-467d-8fba-b9ae98efa7cf" basePath="api" responseTimeout="300000">
+		<http:request-connection host="${http.boss.host}" port="${http.boss.port}" protocol="HTTPS">
+			<http:authentication >
+				<http:basic-authentication username="${auth.user}" password="${auth.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+		<http:request-config name="HTTP_Request_email_alert"
+		doc:name="HTTP Request configuration" doc:id="7c465a65-bae0-4d74-a18d-bbffa413905a" basePath="api">
+		<http:request-connection host="${email.alert.api.host}"
+			port="${email.alert.api.port}" protocol="HTTPS">
+			<http:authentication >
+				<http:basic-authentication username="${auth.user}" password="${auth.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+		<http:request-config name="HTTP_Request_exceptionHandling" doc:name="HTTP Request configuration" doc:id="a2703ec6-c584-4632-ae01-ea26df84a9d9" basePath="api">
+		<http:request-connection host="${http.exception.host}" port="${http.exception.port}" protocol="HTTPS">
+			<http:authentication >
+				<http:basic-authentication username="${auth.user}" password="${auth.password}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+</mule>
