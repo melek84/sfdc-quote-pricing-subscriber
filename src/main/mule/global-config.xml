@@ -33,4 +33,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 			</http:authentication>
 		</http:request-connection>
 	</http:request-config>
+<global-property doc:name="Global Property" doc:id="016c2138-d3f3-4ef0-87f8-4a994f5aa4a1" name="mule.env" value="dev" />
+
 </mule>
