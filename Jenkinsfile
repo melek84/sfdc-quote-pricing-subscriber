@@ -17,7 +17,7 @@ pipeline {
 
     stage('Test') {
       steps {
-          bat "mvn test -D-Mmule.env=dev" 
+          bat "mvn test -M-Dmule.env=dev" 
         
           
       }
@@ -29,7 +29,7 @@ pipeline {
         APP_NAME = 'quote-dev'
       }
       steps {
-            bat 'mvn -DskipTests deploy -DmuleDeploy -Dmule.version="%MULE_VERSION%" -Danypoint.username="%DEPLOY_CREDS_USR%" -Danypoint.password="%DEPLOY_CREDS_PSW%" -Dcloudhub.app="%APP_NAME%" -Dcloudhub.environment="%ENVIRONMENT%" -Dcloudhub.bg="%BG%" -Dcloudhub.worker="%WORKER%" -D-Mmule.env=dev'
+            bat 'mvn -DskipTests deploy -DmuleDeploy -Dmule.version="%MULE_VERSION%" -Danypoint.username="%DEPLOY_CREDS_USR%" -Danypoint.password="%DEPLOY_CREDS_PSW%" -Dcloudhub.app="%APP_NAME%" -Dcloudhub.environment="%ENVIRONMENT%" -Dcloudhub.bg="%BG%" -Dcloudhub.worker="%WORKER%" -M-Dmule.env=dev'
       }
     }
   }
