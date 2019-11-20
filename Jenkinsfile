@@ -11,13 +11,13 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-          sh 'mvn clean -DskipTests package'
+          sh 'mvn -P clean -DskipTests package'
       }
     }
 
     stage('Test') {
       steps {
-          sh "mvn test -Dmule.env=dev" 
+          sh "mvn -P test -Dmule.env=dev" 
         
           
       }
