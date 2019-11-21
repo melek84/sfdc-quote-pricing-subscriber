@@ -11,13 +11,13 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-          sh 'mvn clean -DskipTests package'
+          bash 'mvn clean -DskipTests package'
       }
     }
 
     stage('Test') {
       steps {
-          sh "mvn test -Dmule.env=dev" 
+          bash "mvn test -Dmule.env=dev" 
         
           
       }
@@ -29,7 +29,7 @@ pipeline {
         APP_NAME = 'quote-dev'
       }
       steps {
-           sh 'mvn -DskipTests deploy -DmuleDeploy -Dmule.version="%MULE_VERSION%" -Danypoint.username="%DEPLOY_CREDS_USR%" -Danypoint.password="%DEPLOY_CREDS_PSW%" -Dcloudhub.app="%APP_NAME%" -Dcloudhub.environment="%ENVIRONMENT%" -Dcloudhub.bg="%BG%" -Dcloudhub.worker="%WORKER%" -Dmule.env=dev'
+           bash 'mvn -DskipTests deploy -DmuleDeploy -Dmule.version="%MULE_VERSION%" -Danypoint.username="%DEPLOY_CREDS_USR%" -Danypoint.password="%DEPLOY_CREDS_PSW%" -Dcloudhub.app="%APP_NAME%" -Dcloudhub.environment="%ENVIRONMENT%" -Dcloudhub.bg="%BG%" -Dcloudhub.worker="%WORKER%" -Dmule.env=dev'
       }
     }
   }
